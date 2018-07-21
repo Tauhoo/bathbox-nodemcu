@@ -5,24 +5,14 @@
 
 SoftwareSerial se_read(D5, D6); // write only
 SoftwareSerial se_write(D0, D1); // read only
-String const url = "http://ku-exceed-backend.appspot.com/api/";
+String const url = "http://ecourse.cpe.ku.ac.th/exceed/api/";
 
 struct ProjectData {
-  int32_t is_button_pressed;
-  float temp;
-  int32_t light_lux;
-  float sound;
-  int32_t door;
-  int32_t plus;
+  int32_t isBoxEmpty;
 } cur_project_data;
 
 struct ServerData {
-  int32_t is_button_pressed;
-  float temp;
-  int32_t light_lux;
-  float sound;
-  int32_t door;
-  int32_t plus;
+  int32_t isBoxEmpty;
 } server_data;
 
 const char GET_SERVER_DATA = 1;
@@ -30,8 +20,8 @@ const char GET_SERVER_DATA_RESULT = 2;
 const char UPDATE_PROJECT_DATA = 3;
 
 // wifi configuration
-const char SSID[] = "Unknow";
-const char PASSWORD[] = "1q2w3e4r";
+const char SSID[] = "EXCEED_RIGHT_3_5GHz";
+const char PASSWORD[] = "1234567890";
 
 // for nodemcu communication
 uint32_t last_sent_time = 0;
@@ -105,6 +95,7 @@ bool GET(const char *url, void (*callback)(String const &str,int32_t &value), in
     if (callback != 0) {
       callback(main_client.getString(),value);
     }
+    delay(200);
     return true;
   }
   Serial.println("GET REQUEST RESPONSE BEGIN");
@@ -118,6 +109,7 @@ bool GET(const char *url, void (*callback)(String const &str,float &value), floa
     if (callback != 0) {
       callback(main_client.getString(),value);
     }
+    delay(200);
     return true;
   }
   Serial.println("GET REQUEST RESPONSE BEGIN");
@@ -132,6 +124,7 @@ bool POST(const char *url, void (*callback)(String const &str)) {
     if (callback != 0) {
       callback(main_client.getString());
     }
+    delay(200);
     return true;
   }
   Serial.println("POST REQUEST RESPONSE BEGIN");
@@ -185,9 +178,7 @@ void loop() {
     //GET("http://ku-exceed-backend.appspot.com/api/exceed-temperature/view/", get_request,server_data.temp); 
     //Serial.print("temp : ");
     //Serial.println(server_data.temp);
-    GET(get_builder("palm_factory-exceed-plus").c_str(), get_request,server_data.plus); 
-    Serial.print("plus : ");
-    Serial.println(server_data.plus);
+    //GET(get_builder("palm_factory-exceed-plus").c_str(), get_request,server_data.plus);
     //GET("http://ku-exceed-backend.appspot.com/api/exceed_value/set/?value=test", 0);
     last_sent_time = cur_time;
   }
@@ -214,24 +205,12 @@ void loop() {
         switch (cur_data_header) {
           case UPDATE_PROJECT_DATA: {
               ProjectData *project_data = (ProjectData*)buffer;
-              float temp = project_data->temp;
-              int32_t light_lux = project_data->light_lux;
-              int32_t is_button_pressed = project_data->is_button_pressed;
-              float sound = project_data->sound;
-              int32_t door = project_data->door;
-              int32_t plus = project_data->plus;
-              Serial.println(plus);
-              POST(set_builder("exceed-temp", temp).c_str(), update_data_to_server_callback);
-              POST(set_builder("exceed-light_lux", light_lux).c_str(), update_data_to_server_callback);
-              POST(set_builder("exceed-is_button_pressed", is_button_pressed).c_str(), update_data_to_server_callback);
-              POST(set_builder("exceed-sound", sound).c_str(), update_data_to_server_callback);
-              POST(set_builder("exceed-door", door).c_str(), update_data_to_server_callback);
-              POST(set_builder("palm_factory-exceed-plus", plus).c_str(), update_data_to_server_callback);
+              POST(set_builder("pf-box-status", project_data->isBoxEmpty).c_str(), update_data_to_server_callback);
             }
             break;
           case GET_SERVER_DATA:
             Serial.println("Send data to arduino");
-            send_to_arduino(GET_SERVER_DATA_RESULT, &server_data, sizeof(ServerData));
+            //send_to_arduino(GET_SERVER_DATA_RESULT, &server_data, sizeof(ServerData));
             break;
         }
         cur_buffer_length = -1;
