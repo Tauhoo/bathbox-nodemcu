@@ -1,7 +1,7 @@
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
 #include <EspSoftwareSerial.h>
-#include <math.h>
+#include <math.h>]
 
 SoftwareSerial se_read(D5, D6); // write only
 SoftwareSerial se_write(D0, D1); // read only
@@ -9,10 +9,12 @@ String const url = "http://ecourse.cpe.ku.ac.th/exceed/api/";
 
 struct ProjectData {
   int32_t isBoxEmpty;
+  int32_t TotalUsage;
 } cur_project_data;
 
 struct ServerData {
   int32_t isBoxEmpty;
+  int32_t TotalUsage;
 } server_data;
 
 const char GET_SERVER_DATA = 1;
@@ -20,8 +22,8 @@ const char GET_SERVER_DATA_RESULT = 2;
 const char UPDATE_PROJECT_DATA = 3;
 
 // wifi configuration
-const char SSID[] = "EXCEED_RIGHT_3_5GHz";
-const char PASSWORD[] = "1234567890";
+const char SSID[] = "iPhone";
+const char PASSWORD[] = "aaaaaacd";
 
 // for nodemcu communication
 uint32_t last_sent_time = 0;
@@ -63,7 +65,6 @@ void serial_initialization() {
     se_read.listen();
   }
 
-  Serial.println();
   Serial.println("SERIAL INITIALIZED.");
 }
 
@@ -158,7 +159,7 @@ void get_request_raw_callback(String const &str) {
 void setup() {
   serial_initialization();
   wifi_initialization();
-
+  Serial.print("start");
   Serial.print("sizeof(ServerData): ");
   Serial.println((int)sizeof(ServerData));
   Serial.print("ESP READY!");
@@ -182,7 +183,6 @@ void loop() {
     //GET("http://ku-exceed-backend.appspot.com/api/exceed_value/set/?value=test", 0);
     last_sent_time = cur_time;
   }
-
   while (se_read.available()) {
     char ch = se_read.read();
     //Serial.print("RECV: ");0
@@ -206,6 +206,11 @@ void loop() {
           case UPDATE_PROJECT_DATA: {
               ProjectData *project_data = (ProjectData*)buffer;
               POST(set_builder("pf-box-status", project_data->isBoxEmpty).c_str(), update_data_to_server_callback);
+              POST(set_builder("pf-box-totaluse", project_data->TotalUsage).c_str(), update_data_to_server_callback);
+              Serial.print("isBoxEmpty : ");
+              Serial.println(project_data->isBoxEmpty);
+              Serial.print("TotalUsage : ");
+              Serial.println(project_data->TotalUsage);
             }
             break;
           case GET_SERVER_DATA:
